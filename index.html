@@ -1,0 +1,1464 @@
+con el siguiente codigo crea una taqueria : <!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Taquería Mexicana 3D</title>
+<style>
+:root {
+ --cream:#fff1d6;
+ --red:#b92d24;
+ --green:#246b45;
+ --ink:#24211d;
+}
+*{box-sizing:border-box}
+html,body{
+ margin:0;width:100%;height:100%;overflow:hidden;
+ background:#171717;color:var(--cream);
+ font-family:system-ui,Segoe UI,sans-serif
+}
+#game{position:fixed;inset:0}
+canvas{display:block}
+#top{
+ position:fixed;top:12px;left:12px;right:12px;
+ display:flex;gap:10px;align-items:flex-start;
+ justify-content:space-between;pointer-events:none
+}
+.panel{
+ background:#17130fe8;border:1px solid #e9c78b66;
+ border-radius:12px;padding:10px 13px;
+ box-shadow:0 5px 22px #0007;
+ backdrop-filter:blur(7px)
+}
+#brand{font-weight:900;letter-spacing:1px;font-size:17px;color:#ffd98e}
+#stats{font-size:13px;line-height:1.7}
+#mission{max-width:390px;font-size:13px;line-height:1.45}
+#bottom{
+ position:fixed;bottom:14px;left:50%;
+ transform:translateX(-50%);
+ display:flex;gap:8px;align-items:center;
+ flex-wrap:wrap;justify-content:center;
+ width:min(94vw,900px);pointer-events:none
+}
+#bottom .panel{pointer-events:auto}
+button{
+ border:0;border-radius:9px;background:#f3c36f;
+ color:#261b12;font-weight:800;padding:10px 13px;
+ cursor:pointer
+}
+button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+button:disabled{opacity:.4;cursor:not-allowed}
+#hint{font-size:13px;min-width:240px;text-align:center}
+#interact{
+ position:fixed;left:50%;top:53%;
+ transform:translate(-50%,-50%);
+ font-size:13px;background:#100e0de8;
+ padding:9px 13px;border-radius:9px;
+ display:none;border:1px solid #f5d18a
+}
+#modal{
+ position:fixed;inset:0;background:#090807c9;
+ display:grid;place-items:center;padding:18px;z-index:5
+}
+#card{
+ width:min(600px,95vw);max-height:85vh;overflow:auto;
+ background:#211b16;border:1px solid #d9ae6b;
+ border-radius:18px;padding:22px;
+ box-shadow:0 20px 80px #000
+}
+#card h2{margin:0 0 8px;color:#ffd98e}
+#card p{line-height:1.55;color:#f5e5c9}
+#choices{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+ gap:9px;margin-top:14px
+}
+.choice{
+ background:#3a2c20;border:1px solid #a77c4c;
+ color:#fff0d2;padding:12px;border-radius:10px;text-align:left
+}
+.choice small{display:block;color:#d8bd95;font-weight:500;margin-top:4px}
+#close{float:right;background:#eee0c6}
+#toast{
+ position:fixed;top:90px;left:50%;
+ transform:translateX(-50%);background:#183d2b;
+ padding:10px 16px;border-radius:10px;display:none;z-index:4
+}
+#start{
+ position:fixed;inset:0;z-index:8;display:grid;
+ place-items:center;
+ background:linear-gradient(#1b130dc9,#120e0edb),
+ radial-gradient(circle at center,#8c4d25,#17100b)
+}
+#startbox{
+ max-width:650px;margin:20px;padding:30px;
+ background:#211912ed;border:1px solid #d5a45e;
+ border-radius:20px;text-align:center;
+ box-shadow:0 20px 70px #000
+}
+#startbox h1{
+ font-size:clamp(30px,6vw,54px);
+ line-height:1.02;margin:0;color:#ffd58a
+}
+#startbox p{line-height:1.6;color:#f2dfbf}
+kbd{background:#493a2c;padding:2px 6px;border-radius:4px}
+#sound{
+ position:fixed;right:13px;bottom:14px;z-index:3
+}
+#pauseBtn{
+ position:fixed;right:13px;top:74px;z-index:3;
+ background:#33271d;color:#ffe8bd;border:1px solid #d3a45d
+}
+#crosshair{
+ position:fixed;left:50%;top:50%;width:8px;height:8px;
+ transform:translate(-50%,-50%);
+ pointer-events:none;display:none;z-index:1
+}
+#crosshair:before,#crosshair:after{
+ content:"";position:absolute;background:#fff3d9;
+ box-shadow:0 0 4px #000
+}
+#crosshair:before{left:3px;top:-5px;width:2px;height:18px}
+#crosshair:after{left:-5px;top:3px;width:18px;height:2px}
+#touchUI{
+ display:none;position:fixed;inset:auto 0 18px 0;
+ z-index:3;align-items:end;justify-content:space-between;
+ padding:0 18px;pointer-events:none;touch-action:none
+}
+#stickBase{
+ width:124px;height:124px;border-radius:50%;
+ background:#17130f88;border:2px solid #f6d39a99;
+ position:relative;pointer-events:auto;touch-action:none;
+ box-shadow:0 4px 18px #0007
+}
+#stickKnob{
+ width:48px;height:48px;position:absolute;
+ left:36px;top:36px;border-radius:50%;
+ background:#f3c36fdd;border:2px solid #fff0d2;
+ box-shadow:0 2px 8px #0008
+}
+#touchActions{
+ display:flex;flex-direction:column;gap:10px;
+ pointer-events:auto
+}
+#touchActions button{
+ min-width:96px;min-height:54px;
+ box-shadow:0 4px 18px #0008;touch-action:none
+}
+#touchUse{background:#f3c36f}
+#touchRun{background:#2d6b48;color:#fff4da}
+#lookHelp{
+ position:fixed;right:18px;bottom:155px;
+ font-size:11px;color:#fff1d6b8;
+ background:#17130f88;padding:6px 9px;
+ border-radius:8px;display:none;pointer-events:none
+}
+@media (pointer:coarse),(max-width:700px){
+ #touchUI{display:flex}
+ #lookHelp{display:block}
+ #bottom{bottom:155px;width:96vw}
+ #hint{min-width:100%;font-size:12px}
+ #sound{bottom:12px;right:12px}
+ #pauseBtn{top:auto;bottom:12px;right:120px}
+ #crosshair{display:none}
+}
+@media(max-width:600px){
+ #top{flex-direction:column}
+ #mission{max-width:85vw}
+ #stats{font-size:12px}
+ #bottom{bottom:155px}
+ #hint{min-width:100%}
+}
+</style>
+</head>
+<body>
+
+<div id="game"></div>
+
+<div id="top">
+ <div class="panel">
+  <div id="brand">🌮 TAQUERÍA MEXICANA 3D</div>
+  <div id="stats">Día 1 · $120 · Inventario: vacío</div>
+ </div>
+ <div class="panel" id="mission">
+  <b>ENCARGO DEL DÍA</b><br>
+  <span id="missionText">Abre el restaurante: ve al mercado por ingredientes.</span>
+ </div>
+</div>
+
+<div id="interact">Presiona <b>E</b> para interactuar</div>
+<div id="crosshair"></div>
+<div id="lookHelp">Desliza el lado derecho para mirar</div>
+
+<div id="touchUI" aria-label="Controles táctiles">
+ <div id="stickBase"><div id="stickKnob"></div></div>
+ <div id="touchActions">
+  <button id="touchRun">🏃 Correr</button>
+  <button id="touchUse">USAR</button>
+ </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="bottom">
+ <div class="panel" id="hint">
+  WASD moverte · Ratón mirar · E interactuar · ESC liberar ratón
+ </div>
+ <button id="helpBtn">Cómo jugar</button>
+ <button id="settingsBtn">⚙ Controles</button>
+ <button id="resetBtn">Reiniciar día</button>
+</div>
+
+<button id="sound">🔊 Sonido: activado</button>
+<button id="pauseBtn">⏸ Pausa</button>
+
+<div id="modal" style="display:none">
+ <div id="card">
+  <button id="close">Cerrar ✕</button>
+  <h2 id="modalTitle"></h2>
+  <p id="modalText"></p>
+  <div id="choices"></div>
+ </div>
+</div>
+
+<div id="start">
+ <div id="startbox">
+  <h1>TAQUERÍA<br>MEXICANA 3D</h1>
+  <p>Tu primer día como taquero comienza ahora. Compra en el mercado, prepara la masa, corta la verdura, cocina la carne, arma tacos y deja impecable tu local.</p>
+  <p>
+   <b>Controles:</b>
+   <kbd>W A S D</kbd> o flechas para caminar ·
+   <kbd>Shift</kbd> correr ·
+   <kbd>Ratón</kbd> mirar ·
+   <kbd>E</kbd> o <kbd>F</kbd> interactuar ·
+   <kbd>Esc</kbd> pausar/liberar cursor.
+   En celular usa el joystick y desliza el lado derecho para mirar.
+  </p>
+  <button id="play" style="font-size:17px;padding:14px 25px">
+   ENTRAR A LA TAQUERÍA
+  </button>
+  <p style="font-size:12px">
+   Recomendado: computadora con navegador actualizado. El sonido se activa al entrar.
+  </p>
+ </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';          const root=document.querySelector('#game');
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9ac4cf);
+scene.fog=new THREE.Fog(0x9ac4cf,22,58);
+
+const camera=new THREE.PerspectiveCamera(
+ 72,innerWidth/innerHeight,.1,100
+);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+root.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffe7c3,0x584332,2));
+
+const sun=new THREE.DirectionalLight(0xffe0ad,3);
+sun.position.set(-8,15,8);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+scene.add(sun);
+
+const mat=(color,roughness=.85)=>
+ new THREE.MeshStandardMaterial({color,roughness});
+
+const M={
+ wall:mat(0xf0d8b0),
+ floor:mat(0x9c7651),
+ wood:mat(0x70452a),
+ dark:mat(0x30231b),
+ metal:mat(0x92999a,.35),
+ red:mat(0xb83225),
+ green:mat(0x286a42),
+ yellow:mat(0xe5b64d),
+ white:mat(0xf4ead7),
+ leaf:mat(0x3f8a3f),
+ meat:mat(0x8e3828),
+ tomato:mat(0xc83a2d),
+ lime:mat(0x7fbd45),
+ corn:mat(0xd6b33e),
+ tile:mat(0xc7b49a)
+};
+
+function box(x,y,z,sx,sy,sz,material,shadow=true){
+ let o=new THREE.Mesh(
+  new THREE.BoxGeometry(sx,sy,sz),
+  material
+ );
+ o.position.set(x,y,z);
+ o.castShadow=shadow;
+ o.receiveShadow=true;
+ scene.add(o);
+ return o;
+}
+
+function cyl(x,y,z,r1,r2,h,material,seg=16){
+ let o=new THREE.Mesh(
+  new THREE.CylinderGeometry(r1,r2,h,seg),
+  material
+ );
+ o.position.set(x,y,z);
+ o.castShadow=true;
+ scene.add(o);
+ return o;
+}
+
+function label(text,x,y,z,color='#fff0cf',size=0.28){
+ const c=document.createElement('canvas');
+ c.width=512;
+ c.height=128;
+ const ctx=c.getContext('2d');
+
+ ctx.fillStyle='rgba(25,17,11,.82)';
+ ctx.fillRect(0,0,512,128);
+ ctx.font='bold 42px system-ui';
+ ctx.textAlign='center';
+ ctx.fillStyle=color;
+ ctx.fillText(text,256,80);
+
+ const tex=new THREE.CanvasTexture(c);
+
+ const m=new THREE.Mesh(
+  new THREE.PlaneGeometry(size*5,size*1.25),
+  new THREE.MeshBasicMaterial({
+   map:tex,
+   transparent:true,
+   side:THREE.DoubleSide
+  })
+ );
+
+ m.position.set(x,y,z);
+ scene.add(m);
+ return m;
+}
+
+function table(x,z,w=3,d=1.2){
+ box(x,.95,z,w,.18,d,M.wood);
+
+ for(const dx of [-w/2+.15,w/2-.15]){
+  for(const dz of [-d/2+.15,d/2-.15]){
+   box(x+dx,.46,z+dz,.13,.9,.13,M.dark);
+  }
+ }
+}
+
+// RESTAURANTE
+
+box(0,-.16,0,22,.3,18,M.floor);
+
+for(let x=-10;x<=10;x+=2){
+ for(let z=-8;z<=8;z+=2){
+  box(
+   x,.001,z,1.94,.015,1.94,
+   ((x+z)%4===0)?M.tile:M.floor,
+   false
+  );
+ }
+}
+
+box(0,4,-9,22,8,.35,M.wall);
+box(-11,4,0,.35,8,18,M.wall);
+box(11,4,0,.35,8,18,M.wall);
+box(0,4,9,22,8,.35,M.wall);
+box(0,8,0,22,.25,18,M.dark);
+
+for(let x=-9;x<=9;x+=3){
+ box(x,7.82,-8.7,1.2,.12,.12,M.yellow);
+}
+
+// COCINA Y MESAS
+
+table(-4,-5,5,1.4);
+label('COCINA',-4,2,-5.65);
+
+table(3,-5,4,1.4);
+label('PREPARACIÓN',3,2,-5.65);
+
+box(-5,.6,-5,.8,.7,.7,M.metal);
+cyl(-5,.99,-5,.45,.45,.08,M.dark);
+cyl(-5,1.08,-5,.3,.3,.08,M.red);
+
+for(let i=0;i<3;i++){
+ cyl(-6.5+i*1.2,1.12,-5,.42,.42,.12,M.metal);
+ cyl(-6.5+i*1.2,1.2,-5,.3,.3,.06,M.dark);
+}
+
+table(0,2,5,1.5);
+table(7,2,4,1.5);
+label('MESAS',1,2.2,1.2);
+
+for(let x of [-1,1,6,8]){
+ box(x,.45,4,.15,.9,.15,M.dark);
+ box(x,.95,4,.8,.12,.8,M.red);
+}
+
+// ENTRADA
+
+box(0,2,8.78,3.1,4,.12,M.wood);
+box(0,2.05,8.69,2.5,3.5,.1,M.green);
+
+label('BIENVENIDOS',0,4.6,8.55,'#ffe1a0',.38);
+label('TAQUERÍA EL COMAL',0,7,-8.7,'#ffd36f',.5);
+
+// MERCADO
+
+box(0,-.1,18,22,.2,12,mat(0x9a7955));
+box(-9,2,18,.3,4,12,M.green);
+box(9,2,18,.3,4,12,M.red);
+
+table(-5,16,3,1);
+table(0,16,3,1);
+table(5,16,3,1);
+
+for(let x of [-5,0,5]){
+ cyl(
+  x,1.25,16,.55,.55,.35,
+  x<0?M.tomato:x===0?M.green:M.yellow
+ );
+
+ label(
+  x<0?'VERDURAS':x===0?'CARNICERÍA':'ABARROTES',
+  x,2.5,15.4,'#fff0c8',.24
+ );
+}
+
+label('MERCADO MUNICIPAL',0,5,12,'#ffe1a0',.48);
+
+for(let i=0;i<6;i++){
+ let x=-6+(i%3)*1.1;
+ let z=15.6+Math.floor(i/3)*.7;
+
+ cyl(
+  x,.75,z,.28,.28,.28,
+  [M.tomato,M.leaf,M.lime,M.yellow,M.meat,M.white][i]
+ );
+}
+
+// ESTACIONES INTERACTIVAS
+
+const stations=[
+ {id:'market',name:'Mercado municipal',pos:[0,1,15.3]},
+ {id:'clean',name:'Zona de limpieza',pos:[8,1,-1]},
+ {id:'masa',name:'Mesa de masa',pos:[3,1,-5]},
+ {id:'veg',name:'Tabla de verduras',pos:[3,1,-4.1]},
+ {id:'meat',name:'Comal de carne',pos:[-5,1,-5]},
+ {id:'taco',name:'Estación de tacos',pos:[1,1,2]},
+ {id:'serve',name:'Mostrador',pos:[0,1,7.2]}
+];
+
+// INVENTARIO Y DINERO
+
+let inventory={};
+let money=120;
+
+let progress={
+ bought:false,
+ clean:false,
+ dough:false,
+ veg:false,
+ meat:false,
+ taco:false,
+ served:false
+};
+
+let soundOn=true;
+let audio=null;
+let toastTimer;
+
+function toast(t){
+ const el=document.querySelector('#toast');
+ el.textContent=t;
+ el.style.display='block';
+
+ clearTimeout(toastTimer);
+
+ toastTimer=setTimeout(()=>{
+  el.style.display='none';
+ },2400);
+}
+
+function updateUI(){
+ document.querySelector('#stats').textContent=
+ `Día 1 · $${money} · Inventario: ${
+ Object.keys(inventory)
+ .filter(k=>inventory[k])
+ .map(k=>`${inventory[k]} ${k}`)
+ .join(', ')||'vacío'
+ }`;
+
+ let next=
+ !progress.bought?'Ve al mercado y compra ingredientes.':
+ !progress.clean?'Limpia el restaurante.':
+ !progress.dough?'Prepara masa y tortillas.':
+ !progress.veg?'Pica las verduras.':
+ !progress.meat?'Cocina la carne.':
+ !progress.taco?'Arma tus tacos.':
+ !progress.served?'Entrega la orden al cliente.':
+ '¡Servicio completado! Tu taquería está abierta.';
+
+ document.querySelector('#missionText').textContent=next;
+}
+
+// SONIDOS
+
+function beep(freq=440,dur=.12,type='sine'){
+ if(!soundOn)return;
+
+ try{
+  if(!audio){
+   audio=new (window.AudioContext||window.webkitAudioContext)();
+  }
+
+  if(audio.state==='suspended')audio.resume();
+
+  let o=audio.createOscillator();
+  let g=audio.createGain();
+
+  o.type=type;
+  o.frequency.value=freq;
+
+  g.gain.setValueAtTime(.08,audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(
+   .001,audio.currentTime+dur
+  );
+
+  o.connect(g);
+  g.connect(audio.destination);
+
+  o.start();
+  o.stop(audio.currentTime+dur);
+
+ }catch(e){}
+}
+
+function sizzle(){
+ if(!soundOn)return;
+
+ beep(95,.22,'sawtooth');
+
+ setTimeout(()=>{
+  beep(130,.18,'sawtooth');
+ },100);
+}
+
+// VENTANAS DE INTERACCIÓN
+
+function showModal(title,desc,choices){
+ document.exitPointerLock?.();
+
+ document.querySelector('#modalTitle').textContent=title;
+ document.querySelector('#modalText').textContent=desc;
+
+ const c=document.querySelector('#choices');
+ c.innerHTML='';
+
+ choices.forEach(ch=>{
+  let b=document.createElement('button');
+  b.className='choice';
+
+  b.innerHTML=ch.label+
+   (ch.sub?`<small>${ch.sub}</small>`:'');
+
+  b.onclick=()=>{
+   ch.run();
+   closeModal();
+  };
+
+  c.appendChild(b);
+ });
+
+ document.querySelector('#modal').style.display='grid';
+}
+
+function closeModal(){
+ document.querySelector('#modal').style.display='none';
+
+ if(started&&!isTouchDevice()){
+  renderer.domElement.requestPointerLock?.();
+ }
+}
+
+document.querySelector('#close').onclick=closeModal;
+
+function has(k,n=1){
+ return (inventory[k]||0)>=n;
+}
+
+function take(k,n=1){
+ inventory[k]=(inventory[k]||0)-n;
+
+ if(inventory[k]<=0)delete inventory[k];
+
+ updateUI();
+}
+
+function add(k,n=1){
+ inventory[k]=(inventory[k]||0)+n;
+ updateUI();
+}
+
+// SISTEMA DE INTERACCIONES
+
+function interact(s){
+ beep(520,.08);
+
+ if(s.id==='market'){
+  showModal(
+   'Mercado municipal',
+   'Elige tus ingredientes. Tienes $'+money+
+   '. Los puestos tienen productos frescos.',
+   [
+    {
+     label:'Comprar maíz · $20',
+     sub:'Necesario para la masa',
+     run:()=>buy('maíz',20)
+    },
+    {
+     label:'Comprar verduras · $25',
+     sub:'Cebolla, cilantro, tomate y limón',
+     run:()=>buy('verduras',25)
+    },
+    {
+     label:'Comprar carne · $45',
+     sub:'Carne para tacos',
+     run:()=>buy('carne',45)
+    },
+    {
+     label:'Comprar todo · $90',
+     sub:'Paquete de apertura',
+     run:()=>{
+      if(money>=90){
+       money-=90;
+       add('maíz');
+       add('verduras');
+       add('carne');
+       progress.bought=true;
+       toast('Compraste el paquete completo.');
+      }else{
+       toast('No tienes suficiente dinero.');
+      }
+      updateUI();
+     }
+    }
+   ]
+  );
+  return;
+ }
+
+ if(s.id==='clean'){
+  showModal(
+   'Limpieza del restaurante',
+   'Pasa el trapeador, limpia las mesas y deja lista la cocina.',
+   [
+    {
+     label:'Barrer el piso',
+     sub:'Quita polvo y basura',
+     run:()=>{
+      progress.clean=true;
+      beep(280,.25);
+      toast('Piso limpio. ¡Buen trabajo!');
+      updateUI();
+     }
+    },
+    {
+     label:'Limpiar mesas y cocina',
+     sub:'Desinfecta las superficies',
+     run:()=>{
+      progress.clean=true;
+      beep(320,.25);
+      toast('Mesas y cocina impecables.');
+      updateUI();
+     }
+    }
+   ]
+  );
+  return;
+ }
+
+ if(s.id==='masa'){
+  if(!progress.bought||!has('maíz')){
+   toast('Primero compra maíz en el mercado.');
+   return;
+  }
+
+  showModal(
+   'Preparar masa',
+   'Transforma el maíz en masa y después prensa tus tortillas.',
+   [
+    {
+     label:'Moler y nixtamalizar',
+     sub:'Preparar el maíz',
+     run:()=>{
+      if(has('maíz')){
+       take('maíz');
+       add('masa');
+       toast('¡Masa lista!');
+      }
+     }
+    },
+    {
+     label:'Amasar y prensar tortillas',
+     sub:'Usa la masa para formar tortillas',
+     run:()=>{
+      if(has('masa')){
+       take('masa');
+       add('tortillas',4);
+       progress.dough=true;
+       toast('Hiciste 4 tortillas frescas.');
+      }else{
+       toast('Primero debes moler el maíz.');
+      }
+      updateUI();
+     }
+    }
+   ]
+  );
+  return;
+ }
+
+ if(s.id==='veg'){
+  if(!has('verduras')){
+   toast('Compra verduras en el mercado.');
+   return;
+  }
+
+  showModal(
+   'Picar verduras',
+   'Elige qué preparar. El cuchillo suena al cortar.',
+   [
+    {
+     label:'Picar cebolla y cilantro',
+     sub:'Corte fino para los tacos',
+     run:()=>{
+      take('verduras');
+      add('verdura picada');
+      progress.veg=true;
+      beep(780,.08,'square');
+
+      setTimeout(()=>{
+       beep(620,.08,'square');
+      },120);
+
+      toast('Verdura picada.');
+      updateUI();
+     }
+    },
+    {
+     label:'Preparar salsa',
+     sub:'Moler tomate y chile',
+     run:()=>{
+      take('verduras');
+      add('salsa');
+      progress.veg=true;
+      beep(400,.15);
+      toast('Salsa de la casa lista.');
+      updateUI();
+     }
+    }
+   ]
+  );
+  return;
+ }
+
+ if(s.id==='meat'){
+  if(!has('carne')){
+   toast('Compra carne en el mercado.');
+   return;
+  }
+
+  showModal(
+   'Cocinar en el comal',
+   'La carne chisporrotea mientras se cocina.',
+   [
+    {
+     label:'Cocinar carne',
+     sub:'Dorar y sazonar en el comal',
+     run:()=>{
+      take('carne');
+      add('carne cocida');
+      progress.meat=true;
+      sizzle();
+      toast('¡Carne cocida y lista!');
+      updateUI();
+     }
+    }
+   ]
+  );
+  return;
+ }
+
+ if(s.id==='taco'){
+  if(
+   !has('tortillas')||
+   !has('carne cocida')||
+   !has('verdura picada')
+  ){
+   toast('Necesitas tortilla, carne cocida y verdura picada.');
+   return;
+  }
+
+  showModal(
+   'Armar tacos',
+   'Monta tus tacos al gusto. La tortilla es la base.',
+   [
+    {
+     label:'Preparar 2 tacos completos',
+     sub:'Tortilla + carne + cebolla + cilantro',
+     run:()=>{
+      take('tortillas',2);
+      take('carne cocida');
+      take('verdura picada');
+      add('orden de tacos');
+      progress.taco=true;
+      toast('¡Dos tacos listos para servir!');
+      updateUI();
+     }
+    },
+    {
+     label:'Agregar salsa',
+     sub:'Un toque de salsa de la casa',
+     run:()=>{
+      if(has('salsa')){
+       take('salsa');
+       toast('Salsa agregada.');
+      }else{
+       toast('Todavía no preparas salsa.');
+      }
+     }
+    }
+   ]
+  );
+  return;
+ }
+
+ if(s.id==='serve'){
+  if(!has('orden de tacos')){
+   toast('Primero prepara una orden en la estación de tacos.');
+   return;
+  }
+
+  showModal(
+   '¡Orden lista!',
+   'Un cliente espera sus tacos recién hechos.',
+   [
+    {
+     label:'Entregar orden · +$60',
+     sub:'Cliente satisfecho',
+     run:()=>{
+      take('orden de tacos');
+      money+=60;
+      progress.served=true;
+      beep(660,.15);
+
+      setTimeout(()=>{
+       beep(880,.2);
+      },160);
+
+      toast('¡Venta realizada! Ganaste $60.');
+      updateUI();
+     }
+    }
+   ]
+  );
+ }
+}
+
+function buy(k,cost){
+ if(money<cost){
+  toast('No tienes suficiente dinero.');
+  return;
+ }
+
+ money-=cost;
+ add(k);
+
+ if(has('maíz')&&has('verduras')&&has('carne')){
+  progress.bought=true;
+ }
+
+ toast('Compraste '+k+'.');
+ updateUI();
+}                                                                      // JUGADOR Y CÁMARA
+
+let player={
+ x:0,
+ y:1.65,
+ z:5,
+ yaw:0,
+ pitch:0,
+ speed:5
+};
+
+camera.position.set(player.x,player.y,player.z);
+camera.rotation.order='YXZ';
+
+let started=false;
+let sensitivity=0.0022;
+let invertY=false;
+let mobileSprint=false;
+
+const keys={};
+
+const isTouchDevice=()=>
+ ('ontouchstart' in window)||navigator.maxTouchPoints>0;
+
+function isModalOpen(){
+ return document.querySelector('#modal').style.display==='grid';
+}
+
+// GIRAR LA CÁMARA
+
+function setLook(dx,dy){
+ player.yaw-=dx*sensitivity;
+
+ player.pitch+=(invertY?1:-1)*dy*sensitivity;
+
+ player.pitch=Math.max(
+  -1.25,
+  Math.min(1.25,player.pitch)
+ );
+
+ camera.rotation.set(
+  player.pitch,
+  player.yaw,
+  0
+ );
+}
+
+// TECLADO
+
+addEventListener('keydown',e=>{
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)){
+  e.preventDefault();
+ }
+
+ keys[e.code]=true;
+
+ if(
+  (e.code==='KeyE'||e.code==='KeyF')&&!e.repeat
+ ){
+  tryInteract();
+ }
+
+ if(e.code==='Escape'){
+  document.exitPointerLock();
+
+  if(started&&!isModalOpen()){
+   toast('Pausa: haz clic en la escena para continuar.');
+  }
+ }
+});
+
+addEventListener('keyup',e=>{
+ keys[e.code]=false;
+});
+
+// RATÓN
+
+renderer.domElement.addEventListener('click',()=>{
+ if(
+  started&&
+  !isTouchDevice()&&
+  !isModalOpen()&&
+  document.pointerLockElement!==renderer.domElement
+ ){
+  renderer.domElement.requestPointerLock?.();
+ }
+});
+
+addEventListener('mousemove',e=>{
+ if(document.pointerLockElement===renderer.domElement){
+  setLook(e.movementX,e.movementY);
+ }
+});
+
+// INDICADOR DE PAUSA
+
+document.addEventListener('pointerlockchange',()=>{
+ const locked=
+  document.pointerLockElement===renderer.domElement;
+
+ document.querySelector('#crosshair').style.display=
+  locked?'block':'none';
+
+ document.querySelector('#pauseBtn').textContent=
+  locked?'⏸ Pausa':'▶ Continuar';
+
+ if(!locked&&started&&!isTouchDevice()){
+  document.querySelector('#hint').textContent=
+   'Cursor libre · Haz clic en la escena para continuar · E/F interactuar';
+ }
+});
+
+// INTERACCIÓN
+
+let nearest=null;
+
+function tryInteract(){
+ if(nearest&&!isModalOpen()){
+  interact(nearest);
+ }else if(!nearest){
+  toast('Acércate a una estación para interactuar.');
+ }
+}
+
+// JOYSTICK VIRTUAL
+
+const stick=document.querySelector('#stickBase');
+const knob=document.querySelector('#stickKnob');
+
+let stickPointer=null;
+let joyX=0;
+let joyY=0;
+
+function updateStick(e){
+ const r=stick.getBoundingClientRect();
+
+ const cx=r.left+r.width/2;
+ const cy=r.top+r.height/2;
+
+ let dx=e.clientX-cx;
+ let dy=e.clientY-cy;
+
+ const max=42;
+ const len=Math.hypot(dx,dy);
+
+ if(len>max){
+  dx=dx/len*max;
+  dy=dy/len*max;
+ }
+
+ joyX=dx/max;
+ joyY=dy/max;
+
+ knob.style.transform=`translate(${dx}px,${dy}px)`;
+}
+
+function resetStick(){
+ stickPointer=null;
+ joyX=0;
+ joyY=0;
+ knob.style.transform='translate(0,0)';
+}
+
+stick.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+
+ stickPointer=e.pointerId;
+ stick.setPointerCapture(e.pointerId);
+
+ updateStick(e);
+});
+
+stick.addEventListener('pointermove',e=>{
+ if(e.pointerId===stickPointer){
+  updateStick(e);
+ }
+});
+
+stick.addEventListener('pointerup',resetStick);
+stick.addEventListener('pointercancel',resetStick);
+
+// CÁMARA TÁCTIL PARA CELULARES
+
+let lookPointer=null;
+let lastLookX=0;
+let lastLookY=0;
+
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(isTouchDevice()&&e.clientX>innerWidth*.42){
+  lookPointer=e.pointerId;
+
+  lastLookX=e.clientX;
+  lastLookY=e.clientY;
+
+  renderer.domElement.setPointerCapture(e.pointerId);
+ }
+});
+
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(e.pointerId===lookPointer){
+  setLook(
+   e.clientX-lastLookX,
+   e.clientY-lastLookY
+  );
+
+  lastLookX=e.clientX;
+  lastLookY=e.clientY;
+ }
+});
+
+renderer.domElement.addEventListener('pointerup',e=>{
+ if(e.pointerId===lookPointer){
+  lookPointer=null;
+ }
+});
+
+renderer.domElement.addEventListener('pointercancel',()=>{
+ lookPointer=null;
+});
+
+// BOTÓN USAR
+
+document.querySelector('#touchUse').addEventListener(
+ 'pointerdown',e=>{
+  e.preventDefault();
+  tryInteract();
+ }
+);
+
+// BOTÓN CORRER
+
+document.querySelector('#touchRun').addEventListener(
+ 'pointerdown',e=>{
+  e.preventDefault();
+  mobileSprint=true;
+ }
+);
+
+[
+ 'pointerup',
+ 'pointercancel',
+ 'pointerleave'
+].forEach(ev=>{
+ document.querySelector('#touchRun').addEventListener(
+  ev,()=>{
+   mobileSprint=false;
+  }
+ );
+});
+
+// DISTANCIA A LAS ESTACIONES
+
+function dist(a,b){
+ return Math.hypot(a[0]-b.x,a[2]-b.z);
+}
+
+// DECORACIÓN
+
+function buildProps(){
+
+ // Lámparas colgantes
+ for(let x of [-6,0,6]){
+  cyl(x,6.8,-1,.12,.12,1,M.dark);
+  cyl(x,6.25,-1,.55,.55,.12,M.yellow);
+ }
+
+ // Ollas y platos
+ for(let x of [-6.5,-5.3,-4.1]){
+  cyl(x,1.32,-5,.28,.28,.16,M.metal);
+  cyl(x,1.42,-5,.21,.21,.08,M.meat);
+ }
+
+ // Plantas decorativas
+ for(let x of [-9,9]){
+  cyl(x,.4,7,.45,.45,.8,M.wood);
+
+  for(let i=0;i<5;i++){
+   let leaf=new THREE.Mesh(
+    new THREE.SphereGeometry(.25,8,6),
+    M.leaf
+   );
+
+   leaf.position.set(
+    x+Math.sin(i*1.2)*.3,
+    1.2,
+    7+Math.cos(i*1.2)*.3
+   );
+
+   leaf.scale.set(.5,1.8,.5);
+
+   scene.add(leaf);
+  }
+ }
+}
+
+buildProps();
+
+// BUCLE PRINCIPAL DEL JUEGO
+
+const clock=new THREE.Clock();
+
+function animate(){
+
+ requestAnimationFrame(animate);
+
+ let dt=Math.min(clock.getDelta(),.04);
+
+ const desktopActive=
+  document.pointerLockElement===renderer.domElement;
+
+ const touchActive=
+  isTouchDevice()&&started&&!isModalOpen();
+
+ if(
+  started&&
+  !isModalOpen()&&
+  (desktopActive||touchActive)
+ ){
+
+  // Adelante y atrás
+  let f=
+   (keys.KeyW||keys.ArrowUp?1:0)-
+   (keys.KeyS||keys.ArrowDown?1:0)-
+   joyY;
+
+  // Izquierda y derecha
+  let r=
+   (keys.KeyD||keys.ArrowRight?1:0)-
+   (keys.KeyA||keys.ArrowLeft?1:0)+
+   joyX;
+
+  // Evita que las diagonales sean más rápidas
+  let len=Math.hypot(f,r)||1;
+
+  f/=len;
+  r/=len;
+
+  // Velocidad al correr
+  const sprint=
+   (keys.ShiftLeft||keys.ShiftRight||mobileSprint)
+   ?1.65:1;
+
+  const velocity=player.speed*sprint*dt;
+
+  // Movimiento según orientación de cámara
+  player.x+=(
+   -Math.sin(player.yaw)*f+
+   Math.cos(player.yaw)*r
+  )*velocity;
+
+  player.z+=(
+   -Math.cos(player.yaw)*f-
+   Math.sin(player.yaw)*r
+  )*velocity;
+
+  // Límites del escenario
+  player.x=Math.max(-10,Math.min(10,player.x));
+  player.z=Math.max(-7.7,Math.min(20,player.z));
+
+  camera.position.set(
+   player.x,
+   player.y,
+   player.z
+  );
+ }
+
+ // Detectar estación cercana
+ nearest=null;
+
+ let best=2.5;
+
+ for(const s of stations){
+  let d=dist(s.pos,player);
+
+  if(d<best){
+   best=d;
+   nearest=s;
+  }
+ }
+
+ // Mostrar aviso de interacción
+ const hint=document.querySelector('#interact');
+
+ if(nearest&&!isModalOpen()){
+
+  hint.style.display='block';
+
+  hint.innerHTML=isTouchDevice()
+   ?`<b>USAR</b> · ${nearest.name}`
+   :`<b>E / F</b> · ${nearest.name}`;
+
+ }else{
+  hint.style.display='none';
+ }
+
+ renderer.render(scene,camera);
+}
+
+// INICIAR JUEGO
+
+animate();
+updateUI();
+
+// AJUSTAR PANTALLA
+
+addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;
+
+ camera.updateProjectionMatrix();
+
+ renderer.setSize(innerWidth,innerHeight);
+});
+
+// BOTÓN ENTRAR
+
+document.querySelector('#play').onclick=()=>{
+ started=true;
+
+ document.querySelector('#start').style.display='none';
+
+ if(!audio){
+  audio=new (window.AudioContext||window.webkitAudioContext)();
+ }
+
+ audio.resume();
+
+ if(!isTouchDevice()){
+  renderer.domElement.requestPointerLock?.();
+ }
+
+ beep(540,.18);
+};
+
+// PAUSAR Y CONTINUAR
+
+document.querySelector('#pauseBtn').onclick=()=>{
+ if(document.pointerLockElement===renderer.domElement){
+
+  document.exitPointerLock();
+
+  toast('Juego en pausa. Haz clic en la escena para volver.');
+
+ }else if(
+  started&&
+  !isTouchDevice()&&
+  !isModalOpen()
+ ){
+
+  renderer.domElement.requestPointerLock?.();
+
+ }else if(started&&isTouchDevice()){
+
+  toast('En celular, el juego está listo para continuar.');
+ }
+};
+
+// CONFIGURACIÓN DE CONTROLES
+
+document.querySelector('#settingsBtn').onclick=()=>{
+
+ showModal(
+  'Ajustes de controles',
+  'Ajusta la velocidad con la que gira la cámara. Los cambios se aplican inmediatamente.',
+  []
+ );
+
+ const c=document.querySelector('#choices');
+
+ c.innerHTML=`
+ <div class="choice">
+  <label for="sensRange">
+   Sensibilidad de cámara:
+   <b id="sensValue">${Math.round(sensitivity*10000)/10}</b>
+  </label>
+
+  <input
+   id="sensRange"
+   type="range"
+   min="8"
+   max="45"
+   value="${Math.round(sensitivity*10000)}"
+   style="width:100%;margin-top:14px"
+  >
+
+  <small>Menor valor = giro más lento y preciso.</small>
+ </div>
+
+ <div class="choice">
+  <label>
+   <input id="invertRange" type="checkbox"
+    ${invertY?'checked':''}>
+   Invertir eje vertical
+  </label>
+
+  <small>
+   Invierte el movimiento arriba/abajo del ratón o dedo.
+  </small>
+ </div>
+
+ <button class="choice" id="settingsDone">
+  Guardar y volver
+ </button>
+ `;
+
+ document.querySelector('#sensRange').oninput=e=>{
+  sensitivity=Number(e.target.value)/10000;
+
+  document.querySelector('#sensValue').textContent=
+   e.target.value/10;
+ };
+
+ document.querySelector('#invertRange').onchange=e=>{
+  invertY=e.target.checked;
+ };
+
+ document.querySelector('#settingsDone').onclick=closeModal;
+};
+
+// SONIDO
+
+document.querySelector('#sound').onclick=()=>{
+ soundOn=!soundOn;
+
+ document.querySelector('#sound').textContent=
+  soundOn?'🔊 Sonido: activado':'🔇 Sonido: apagado';
+
+ if(soundOn){
+  beep(500,.1);
+ }
+};
+
+// AYUDA
+
+document.querySelector('#helpBtn').onclick=()=>{
+
+ showModal(
+  'Cómo jugar',
+
+  'PC: WASD o flechas para caminar, ratón para mirar, Shift para correr y E o F para usar estaciones. Haz clic en la escena para capturar el cursor; ESC o Pausa lo libera. Celular: mueve el joystick izquierdo, arrastra el lado derecho para mirar, mantén Correr para acelerar y toca USAR cuando aparezca una estación. Acércate a una estación hasta ver su aviso.',
+
+  [
+   {
+    label:'¡Entendido!',
+    run:()=>{}
+   }
+  ]
+ );
+};
+
+// REINICIAR DÍA
+
+document.querySelector('#resetBtn').onclick=()=>{
+
+ money=120;
+ inventory={};
+
+ progress={
+  bought:false,
+  clean:false,
+  dough:false,
+  veg:false,
+  meat:false,
+  taco:false,
+  served:false
+ };
+
+ updateUI();
+
+ toast('Día reiniciado.');
+};
+
+</script>
+</body>
+</html>
